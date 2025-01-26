@@ -1,4 +1,13 @@
-# Bootcamp DevOps by [Roxs](https://github.com/roxsross)
+# V Edición Bootcamp RoxsOps
+
+![v-edicion-bootcamp-roxsops](https://github.com/roxsross/roxsross/raw/main/images/roxsross-banner-1.png)
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux"/>
+  <img src="https://img.shields.io/badge/bash_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="Bash Script"/>
+  <img src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+  <img src="https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes"/>
+</p>
 
 ## ¿Qué es DevOps?
 
