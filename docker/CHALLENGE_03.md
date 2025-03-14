@@ -96,14 +96,13 @@ cd 295topics-fullstack
 ### Frontend en Node.js y Express
 
 ```Dockerfile
-# Imagen base para Node.js
-FROM node:alpine
+FROM node:18-alpine
 
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar los archivos de configuración de dependencias
-COPY package.json ./
+# Copiar los archivos de configuración
+COPY package*.json ./
 
 # Instalar las dependencias
 RUN npm install
@@ -111,31 +110,30 @@ RUN npm install
 # Copiar el resto de los archivos
 COPY . .
 
-# Exponer el puerto 3000
+# Exponer el puerto de la aplicación
 EXPOSE 3000
 
-# Comando para iniciar la aplicación
-CMD ["node", "server.js"]
+# Ejecutar la aplicación
+CMD ["npm", "run", "start"]
 ```
 
 ```bash
 docker build -t zairbulos/295topics-frontend:latest ./frontend
-docker tag zairbulos/295topics-frontend:latest zairbulos/295topics-frontend:v1.0.0
+docker tag zairbulos/295topics-frontend:latest zairbulos/295topics-frontend:1.0.0
 docker push zairbulos/295topics-frontend:latest
-docker push zairbulos/295topics-frontend:v1.0.0
+docker push zairbulos/295topics-frontend:1.0.0
 ```
 
 ### Backend en TypeScript
 
 ```Dockerfile
-# Imagen base para Node.js
-FROM node:alpine
+FROM node:18-alpine
 
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar los archivos de configuración de dependencias
-COPY package.json ./
+# Copiar los archivos de configuración
+COPY package*.json ./
 
 # Instalar las dependencias
 RUN npm install
@@ -143,18 +141,18 @@ RUN npm install
 # Copiar el resto de los archivos
 COPY . .
 
-# Exponer el puerto 5000
+# Exponer el puerto de la aplicación
 EXPOSE 5000
 
-# Comando para iniciar la aplicación
-CMD ["npm", "start"]
+# Ejecutar la aplicación
+CMD ["npm", "run", "start"]
 ```
 
 ```bash
 docker build -t zairbulos/295topics-backend:latest ./backend
-docker tag zairbulos/295topics-backend:latest zairbulos/295topics-backend:v1.0.0
+docker tag zairbulos/295topics-backend:latest zairbulos/295topics-backend:1.0.0
 docker push zairbulos/295topics-backend:latest
-docker push zairbulos/295topics-backend:v1.0.0
+docker push zairbulos/295topics-backend:1.0.0
 ```
 
 ### Base de Datos MongoDB
@@ -172,9 +170,9 @@ EXPOSE 27017
 
 ```bash
 docker build -t zairbulos/295topics-db:latest ./db
-docker tag zairbulos/295topics-db:latest zairbulos/295topics-db:v1.0.0
+docker tag zairbulos/295topics-db:latest zairbulos/295topics-db:1.0.0
 docker push zairbulos/295topics-db:latest
-docker push zairbulos/295topics-db:v1.0.0
+docker push zairbulos/295topics-db:1.0.0
 ```
 
 ### Docker Compose
@@ -183,12 +181,12 @@ docker push zairbulos/295topics-db:v1.0.0
 services:
   # MongoDB
   mongo-db:
-    image: zairbulos/295topics-db:latest
+    image: zairbulos/295topics-db:1.0.0
     container_name: mongo-db
     ports:
       - "27017:27017"
     networks:
-      - challenge-03
+      - 295-topics
   
   # Mongo Express
   mongo-express:
@@ -205,11 +203,11 @@ services:
     depends_on:
       - mongo-db
     networks:
-      - challenge-03
+      - 295-topics
 
   # BackEnd
   backend:
-    image: zairbulos/295topics-backend:latest
+    image: zairbulos/295topics-backend:1.0.0
     container_name: topics-api
     ports:
       - "5000:5000"
@@ -221,11 +219,11 @@ services:
     depends_on:
       - mongo-db
     networks:
-      - challenge-03
+      - 295-topics
   
   # FrontEnd
   frontend:
-    image: zairbulos/295topics-frontend:latest
+    image: zairbulos/295topics-frontend:1.0.0
     container_name: topics-web
     ports:
       - "3000:3000"
@@ -234,9 +232,9 @@ services:
     depends_on:
       - backend
     networks:
-      - challenge-03
+      - 295-topics
 
 networks:
-  challenge-03:
+  295-topics:
     driver: bridge
 ```

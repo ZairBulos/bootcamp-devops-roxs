@@ -75,48 +75,64 @@ El script bash debería ser ejecutable y fácil de entender para facilitar la au
 ### API REST en Java
 
 ```Dockerfile
-# Imagen base para Java
-FROM amazoncorretto:18-alpine
+# Etapa de construcción
+FROM maven:3.8-amazoncorretto-18 AS builder
 
-# Establecer el directorio de trabajo
+# Establecer directorio de trabajo
 WORKDIR /app
 
-# Instalar Maven
-RUN apk add --no-cache maven
-
-# Copiar el archivo pom.xml
+# Copiar el pom.xml y los archivos fuente
 COPY pom.xml .
+COPY src ./src
 
-# Copiar el código fuente
-COPY src /app/src
+# Ejecutar la construcción y copiar las dependencias
+RUN mvn clean package -DskipTests dependency:copy-dependencies
 
-# Construir la aplicación Maven
-RUN mvn clean package
+# Etapa de producción
+FROM amazoncorretto:18-alpine
 
-# Exponer el puerto 8080
-EXPOSE 8080	
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar el archivo JAR generado desde la etapa de construcción
+COPY --from=builder /app/target/words.jar app.jar
+
+# Copiar las dependencias necesarias al contenedor final
+COPY --from=builder /app/target/dependency/* ./dependency/
+
+# Exponer el puerto de la aplicación
+EXPOSE 8080
 
 # Ejecutar la aplicación
-CMD ["java", "-jar", "/app/target/words.jar"]
+CMD ["java", "-jar", "app.jar"]
 ```
 
 ### Aplicación Web en Go
 
 ```Dockerfile
-# Imagen base para golang
-FROM golang:alpine
+# Etapa de construcción
+FROM golang:alpine AS builder
 
-# Establecer el directorio de trabajo
+# Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar los archivos necesarios
-COPY dispatcher.go /app
-COPY . /app
+# Copiar el código fuente
+COPY dispatcher.go .
 
-# Instalar las dependencias y construir la aplicación
+# Construir la aplicación
 RUN go build -o main dispatcher.go
 
-# Exponer el puerto 80
+# Etapa de producción
+FROM alpine:latest
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de la etapa de construcción
+COPY --from=builder /app/main .
+COPY static ./static
+
+# Exponer el puerto de la aplicación
 EXPOSE 80
 
 # Ejecutar la aplicación
@@ -138,11 +154,11 @@ EXPOSE 5432
 
 ### Docker Compose
 
-```yml
+```yaml
 services:
   # Postgres
   postgres:
-    image: zairbulos/295words-db:latest
+    image: zairbulos/295words-db:1.0.0
     container_name: db
     environment:
       - POSTGRES_USER=postgres
@@ -150,32 +166,37 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - challenge-04
+      - 295words
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # BackEnd
   backend:
-    image: zairbulos/295words-api:latest
+    image: zairbulos/295words-api:1.0.0
     container_name: api
     ports:
       - "8080:8080"
     depends_on:
       - postgres
     networks:
-      - challenge-04
+      - 295words
 
   # FrontEnd
   frontend:
-    image: zairbulos/295words-web:latest
+    image: zairbulos/295words-web:1.0.0
     container_name: web
     ports:
       - "80:80"
     depends_on:
       - backend
     networks:
-      - challenge-04
+      - 295words
 
 networks:
-  challenge-04:
+  295words:
     driver: bridge
 ```
 
@@ -183,19 +204,19 @@ networks:
 
 ```bash
 docker build -t zairbulos/295words-db:latest ./db
-docker tag zairbulos/295words-db:latest zairbulos/295words-db:v1.0.0
+docker tag zairbulos/295words-db:latest zairbulos/295words-db:1.0.0
 docker push zairbulos/295words-db:latest
-docker push zairbulos/295words-db:v1.0.0
+docker push zairbulos/295words-db:1.0.0
 
 docker build -t zairbulos/295words-api:latest ./api
-docker tag zairbulos/295words-api:latest zairbulos/295words-api:v1.0.0
+docker tag zairbulos/295words-api:latest zairbulos/295words-api:1.0.0
 docker push zairbulos/295words-api:latest
-docker push zairbulos/295words-api:v1.0.0
+docker push zairbulos/295words-api:1.0.0
 
 docker build -t zairbulos/295words-web:latest ./web
-docker tag zairbulos/295words-web:latest zairbulos/295words-web:v1.0.0
+docker tag zairbulos/295words-web:latest zairbulos/295words-web:1.0.0
 docker push zairbulos/295words-web:latest
-docker push zairbulos/295words-web:v1.0.0
+docker push zairbulos/295words-web:1.0.0
 ```
 
 ### Script Bash

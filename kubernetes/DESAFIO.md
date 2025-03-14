@@ -35,7 +35,8 @@ Este ejemplo crea una API básica con flask, junto con un consumidor que accede 
 1. Crear los Dockerfile de la aplicación y del consumidor.
 
     ```Dockerfile
-    FROM python:3.10-alpine
+    # Etapa 1
+    FROM python:3.10-alpine AS builder
 
     # Crear un directorio de trabajo
     WORKDIR /app
@@ -44,14 +45,24 @@ Este ejemplo crea una API básica con flask, junto con un consumidor que accede 
     COPY requirements.txt .
     RUN pip install --no-cache-dir -r requirements.txt
 
+    # Etapa 2
+    FROM python:3.10-alpine
+
+    # Crear un directorio de trabajo
+    WORKDIR /app
+
+    # Copiar únicamente las dependencias desde la etapa builder
+    COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+
     # Copiar el resto de los archivos de la aplicación
     COPY . .
 
     # Crear un usuario no root y cambiar la propiedad directorio de trabajo
-    RUN adduser -D myuser && chown -R myuser /app
+    RUN addgroup -S myuser && adduser -S myuser -G myuser && \
+        chown -R myuser:myuser /app
     USER myuser
 
-    # Exponer el puerto 8000
+    # Exponer el puerto de la aplicación
     EXPOSE 8000
 
     # Ejecutar la aplicación
@@ -59,7 +70,8 @@ Este ejemplo crea una API básica con flask, junto con un consumidor que accede 
     ```
 
     ```Dockerfile
-    FROM python:3.10-alpine
+    # Etapa 1
+    FROM python:3.10-alpine AS builder
 
     # Crear un directorio de trabajo
     WORKDIR /app
@@ -68,11 +80,21 @@ Este ejemplo crea una API básica con flask, junto con un consumidor que accede 
     COPY requirements.txt .
     RUN pip install --no-cache-dir -r requirements.txt
 
+    # Etapa 2
+    FROM python:3.10-alpine
+
+    # Crear un directorio de trabajo
+    WORKDIR /app
+
+    # Copiar únicamente las dependencias desde la etapa builder
+    COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+
     # Copiar el archivo principal de la aplicación
     COPY consumer.py .
 
     # Crear un usuario no root y cambiar la propiedad directorio de trabajo
-    RUN adduser -D myuser && chown -R myuser /app
+    RUN addgroup -S myuser && adduser -S myuser -G myuser && \
+        chown -R myuser:myuser /app
     USER myuser
 
     # Ejecutar la aplicación
@@ -97,7 +119,7 @@ Este ejemplo crea una API básica con flask, junto con un consumidor que accede 
 
     - Namespace: Inicial_nombre_apellido
 
-        ```yml
+        ```yaml
         apiVersion: v1
         kind: Namespace
         metadata:
@@ -106,7 +128,7 @@ Este ejemplo crea una API básica con flask, junto con un consumidor que accede 
 
     - Crear un Deployment para la aplicación flask.
 
-        ```yml
+        ```yaml
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -137,7 +159,7 @@ Este ejemplo crea una API básica con flask, junto con un consumidor que accede 
 
     - Crear un Deployment para el consumidor.
 
-        ```yml
+        ```yaml
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -169,7 +191,7 @@ Este ejemplo crea una API básica con flask, junto con un consumidor que accede 
 
     - Crear un Service de tipo NodePort para exponer la API flask.
 
-        ```yml
+        ```yaml
         apiVersion: v1
         kind: Service
         metadata:
